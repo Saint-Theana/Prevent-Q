@@ -290,7 +290,7 @@ class ActivityManagerService(Patch):
                 method_name, method_body = self.methods[".method public final startActivity(Landroid/app/IApplicationThread;Ljava/lang/String;Landroid/content/Intent;Ljava/lang/String;Landroid/os/IBinder;Ljava/lang/String;IILandroid/app/ProfilerInfo;Landroid/os/Bundle;)I"]
                 # 如果method名在method名修正集合里
                 if method_name in self.fixing:
-                    #print("fixing "+method_name)
+                    print("fixing "+method_name)
                     # 写入新的method语句体
                     # 写入一个空行
                     # 把原本的method语句块的(首行的)method名末尾加上"$Pr"
@@ -305,7 +305,7 @@ class ActivityManagerService(Patch):
                 method_name, method_body = self.methods[method_signature]
                 # 如果method名在method名修正集合里
                 if method_name in self.fixing:
-                    #print("fixing "+method_name)
+                    print("fixing "+method_name)
                     # 写入新的method语句体
                     # 写入一个空行
                     # 把原本的method语句块的(首行的)method名末尾加上"$Pr"
@@ -641,7 +641,7 @@ class ActivityStackSupervisor(Patch):
     extra_count = 0
     lastActivityRecordRef=""
     methods = None
-    fixing = {'cleanUpRemovedTaskLocked','cleanUpRemovedTaskLocked$Pr'}
+    fixing = {'cleanUpRemovedTaskLocked'}
     arg_sp = ""
 
     def __init__(self, dir_services=None, dir_apk='apk'):
@@ -709,10 +709,10 @@ class ActivityStackSupervisor(Patch):
         # 7.x以及7.x之前: 1处或N处(加行xN, N>=1)
         # 8.x: 1+1处或1+N处(方法Hook + 加行xN, N>=1)
         # 9.0: 1处(方法Hook)
-        if self.patched > 1:
+        if self.patched > 2:
             return self.patched
         else:
-            return 1
+            return 2
 
 class ConnectivityService(Patch):
 

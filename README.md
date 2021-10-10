@@ -26,9 +26,9 @@ https://github.com/Saint-Theana/Prevent-Q
  java -Xmx800m -jar apktool_2.6.0.jar b services -o services.jar
 ```
 
-理论上一共会打22处
+理论上一共会打21处，也有可能不一样
 IntentResolver patched 2<br />
-ActivityStack patched 4<br />
+ActivityStack patched 3<br />
 ActivityRecord patched 1<br />
 ProcessList patched 2<br />
 MediaFocusControl patched 3<br />
