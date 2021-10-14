@@ -281,7 +281,10 @@ class ActivityManagerService(Patch):
         # 跳过".line"行
         if line_strip.startswith(".line"):
             return False
-
+        if ".field mStackSupervisor:Lcom/android/server/wm/ActivityStackSupervisor;" in line:
+            output.write(".field public mStackSupervisor:Lcom/android/server/wm/ActivityStackSupervisor;")
+            output.write(os.linesep)
+            return True
         if line.startswith(".method"):
             method_signature = line_strip
             self.method_name_sp = self.find_method_name(line_strip)
@@ -290,7 +293,7 @@ class ActivityManagerService(Patch):
                 method_name, method_body = self.methods[".method public final startActivity(Landroid/app/IApplicationThread;Ljava/lang/String;Landroid/content/Intent;Ljava/lang/String;Landroid/os/IBinder;Ljava/lang/String;IILandroid/app/ProfilerInfo;Landroid/os/Bundle;)I"]
                 # 如果method名在method名修正集合里
                 if method_name in self.fixing:
-                    print("fixing "+method_name)
+                    #print("fixing "+method_name)
                     # 写入新的method语句体
                     # 写入一个空行
                     # 把原本的method语句块的(首行的)method名末尾加上"$Pr"
@@ -305,7 +308,7 @@ class ActivityManagerService(Patch):
                 method_name, method_body = self.methods[method_signature]
                 # 如果method名在method名修正集合里
                 if method_name in self.fixing:
-                    print("fixing "+method_name)
+                    #print("fixing "+method_name)
                     # 写入新的method语句体
                     # 写入一个空行
                     # 把原本的method语句块的(首行的)method名末尾加上"$Pr"
@@ -345,11 +348,7 @@ class ActivityManagerService(Patch):
         # 4.4 必打 8+0 处补丁
         # 5.x ~ 7.x 必打 8+1 处补丁
         # 8.x+ 只打 7+1 处补丁 属于正常情况
-        global plus_flag
-        if plus_flag:
-            return 6 + self.extra_count
-        else:
-            return 7 + self.extra_count
+        return 7
 
     def run(self):
         super(ActivityManagerService, self).run()
@@ -379,6 +378,11 @@ class ActivityStack(Patch):
 
     def patch(self, output, line):
         # 写得非常不清真的代码
+        if ".field private final mTaskHistory:Ljava/util/ArrayList;" in line:
+            output.write(".field public final mTaskHistory:Ljava/util/ArrayList;")
+            output.write(os.linesep)
+            self.patched += 1
+            return True
         if line.startswith(".method"):
             self.method_name_sp = self.find_method_name(line.strip())
         if self.method_name_sp == "resumeTopActivityInnerLocked":
@@ -456,10 +460,10 @@ class ActivityStack(Patch):
 
     def get_patch_count(self):
         # 打补丁的次数可能会多于3次？
-        if self.patched > 3:
+        if self.patched > 4:
             return self.patched
         else:
-            return 3
+            return 4
 
 
 class ProcessList(Patch):
@@ -604,12 +608,6 @@ class ActivityRecord(Patch):
 
     patched = 0
     method_name_sp = ""
-    arg_sp = ""
-    arg2_sp = ""
-    startP1Tracing=False
-    p1Ocupied=False
-    p1Alternative="p1"
-    p1Identity="p1"
     
     def get_path(self):
         return "com/android/server/wm/ActivityRecord.smali"
@@ -620,17 +618,35 @@ class ActivityRecord(Patch):
             output.write(".method public static forTokenLocked(Landroid/os/IBinder;)Lcom/android/server/wm/ActivityRecord;")
             output.write(os.linesep)
             self.patched += 1
-            arg_sp = ""
-            arg2_sp = ""
             return True
-
+        if ".field app:Lcom/android/server/wm/WindowProcessController;" in line:
+            output.write(".field public app:Lcom/android/server/wm/WindowProcessController;")
+            output.write(os.linesep)
+            self.patched += 1
+            return True
+        if ".field appInfo:Landroid/content/pm/ApplicationInfo;" in line:
+            output.write(".field public appInfo:Landroid/content/pm/ApplicationInfo;")
+            output.write(os.linesep)
+            self.patched += 1
+            return True
+        if ".field final info:Landroid/content/pm/ActivityInfo;" in line:
+            output.write(".field public final info:Landroid/content/pm/ActivityInfo;")
+            output.write(os.linesep)
+            self.patched += 1
+            return True
+        if ".method getDisplay()Lcom/android/server/wm/ActivityDisplay;" in line:
+            output.write(".method public getDisplay()Lcom/android/server/wm/ActivityDisplay;")
+            output.write(os.linesep)
+            self.patched += 1
+            return True
+        
 
     def get_patch_count(self):
         # 打补丁的次数可能会多于3次？
-        if self.patched > 1:
+        if self.patched > 5:
             return self.patched
         else:
-            return 1
+            return 5
 
 
 
@@ -664,7 +680,11 @@ class ActivityStackSupervisor(Patch):
             return False
         if line_strip.startswith(".line"):
             return False
-
+        if ".field private mTopResumedActivity:Lcom/android/server/wm/ActivityRecord;" in line:
+            output.write(".field public mTopResumedActivity:Lcom/android/server/wm/ActivityRecord;")
+            output.write(os.linesep)
+            self.patched += 1
+            return True
         if line.startswith(".method"):
             method_signature = line_strip
             if method_signature in self.methods:
@@ -709,10 +729,10 @@ class ActivityStackSupervisor(Patch):
         # 7.x以及7.x之前: 1处或N处(加行xN, N>=1)
         # 8.x: 1+1处或1+N处(方法Hook + 加行xN, N>=1)
         # 9.0: 1处(方法Hook)
-        if self.patched > 2:
+        if self.patched > 3:
             return self.patched
         else:
-            return 2
+            return 3
 
 class ConnectivityService(Patch):
 
@@ -855,6 +875,88 @@ class MediaFocusControl(Patch):
             return 1
 
 
+class ActivityDisplay(Patch):
+    # 此类和IntentResolver类类似 不再详解
+
+    patched = 0
+    method_name_sp = ""
+    
+    def get_path(self):
+        return "com/android/server/wm/ActivityDisplay.smali"
+
+    def patch(self, output, line):
+        # 写得非常不清真的代码
+        if ".method getFocusedStack()Lcom/android/server/wm/ActivityStack;" in line:
+            output.write(".method public getFocusedStack()Lcom/android/server/wm/ActivityStack;")
+            output.write(os.linesep)
+            self.patched += 1
+            return True
+        if ".method getStack(I)Lcom/android/server/wm/ActivityStack;" in line:
+            output.write(".method public getStack(I)Lcom/android/server/wm/ActivityStack;")
+            output.write(os.linesep)
+            self.patched += 1
+            return True
+
+
+    def get_patch_count(self):
+        # 打补丁的次数可能会多于3次？
+        if self.patched > 2:
+            return self.patched
+        else:
+            return 2
+
+class TaskRecord(Patch):
+    # 此类和IntentResolver类类似 不再详解
+
+    patched = 0
+    method_name_sp = ""
+    
+    def get_path(self):
+        return "com/android/server/wm/TaskRecord.smali"
+
+    def patch(self, output, line):
+        # 写得非常不清真的代码
+        if ".field final mActivities:Ljava/util/ArrayList;" in line:
+            output.write(".field public final mActivities:Ljava/util/ArrayList;")
+            output.write(os.linesep)
+            self.patched += 1
+            return True
+
+
+    def get_patch_count(self):
+        # 打补丁的次数可能会多于3次？
+        if self.patched > 1:
+            return self.patched
+        else:
+            return 1
+
+
+class RootActivityContainer(Patch):
+    # 此类和IntentResolver类类似 不再详解
+
+    patched = 0
+    method_name_sp = ""
+    
+    def get_path(self):
+        return "com/android/server/wm/RootActivityContainer.smali"
+
+    def patch(self, output, line):
+        # 写得非常不清真的代码
+        if ".method getDefaultDisplay()Lcom/android/server/wm/ActivityDisplay;" in line:
+            output.write(".method public getDefaultDisplay()Lcom/android/server/wm/ActivityDisplay;")
+            output.write(os.linesep)
+            self.patched += 1
+            return True
+
+
+    def get_patch_count(self):
+        # 打补丁的次数可能会多于3次？
+        if self.patched > 1:
+            return self.patched
+        else:
+            return 1
+
+
 def main():
     # OptionParser这部分就不提了 如感兴趣 自行查阅相关资料
     from optparse import OptionParser
@@ -869,8 +971,11 @@ def main():
 
     IntentResolver(options.dir_services).run()
     ActivityStack(options.dir_services).run()
+    ActivityDisplay(options.dir_services).run()
     ActivityRecord(options.dir_services).run()
+    RootActivityContainer(options.dir_services).run()
     ProcessList(options.dir_services).run()
+    TaskRecord(options.dir_services).run()
     MediaFocusControl(options.dir_services).run()
     Vpn(options.dir_services).run()
     ConnectivityService(options.dir_services).run()
