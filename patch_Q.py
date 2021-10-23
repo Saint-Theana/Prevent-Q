@@ -629,6 +629,11 @@ class ActivityRecord(Patch):
             output.write(os.linesep)
             self.patched += 1
             return True
+        if ".field stringName:Ljava/lang/String;" in line:
+            output.write(".field public stringName:Ljava/lang/String;")
+            output.write(os.linesep)
+            self.patched += 1
+            return True
         if ".field final info:Landroid/content/pm/ActivityInfo;" in line:
             output.write(".field public final info:Landroid/content/pm/ActivityInfo;")
             output.write(os.linesep)
@@ -643,10 +648,10 @@ class ActivityRecord(Patch):
 
     def get_patch_count(self):
         # 打补丁的次数可能会多于3次？
-        if self.patched > 5:
+        if self.patched > 6:
             return self.patched
         else:
-            return 5
+            return 6
 
 
 
