@@ -383,6 +383,11 @@ class ActivityStack(Patch):
             output.write(os.linesep)
             self.patched += 1
             return True
+        if ".method getVisibility(Lcom/android/server/wm/ActivityRecord;)I" in line:
+            output.write(".method public getVisibility(Lcom/android/server/wm/ActivityRecord;)I")
+            output.write(os.linesep)
+            self.patched += 1
+            return True
         if line.startswith(".method"):
             self.method_name_sp = self.find_method_name(line.strip())
         if self.method_name_sp == "resumeTopActivityInnerLocked":
@@ -460,10 +465,10 @@ class ActivityStack(Patch):
 
     def get_patch_count(self):
         # 打补丁的次数可能会多于3次？
-        if self.patched > 4:
+        if self.patched > 5:
             return self.patched
         else:
-            return 4
+            return 5
 
 
 class ProcessList(Patch):
